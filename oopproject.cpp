@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <cctype>   // for isupper, islower, isdigit
 using namespace std;
 
 // ===== Safe integer conversion =====
@@ -15,6 +16,7 @@ int safeStoi(const string &s) {
         return 0;
     }
 }
+
 
 // ===== Safe integer input =====
 int getIntInput() {
@@ -43,8 +45,22 @@ public:
                email.find('.') != string::npos;
     }
     static bool isValidPassword(string password) {
-        return password.length() >= 6;
+        if (password.length() < 8) return false;
+
+        bool hasUpper = false;
+        bool hasLower = false;
+        bool hasDigit = false;
+        bool hasSpecial = false;
+
+        for (char c : password) {
+            if (isupper(c)) hasUpper = true;
+            else if (islower(c)) hasLower = true;
+            else if (isdigit(c)) hasDigit = true;
+            else hasSpecial = true;
     }
+
+    return hasUpper && hasLower && hasDigit && hasSpecial;
+}
 };
 
 // ===== User =====
@@ -255,12 +271,14 @@ void loadMessagesFromFile(vector<Message>& messages) {
 // ===== Welcome Menu =====
 class welcome {
 public:
-    void display() {
-        cout << "========================================" << endl;
-        cout << "           WELCOME TO SOCIAL MEDIA       " << endl;
-        cout << "========================================" << endl << endl;
-        cout << "     Connect with your friends" << endl << endl;
+    void display(int totalUsers) {
+            cout << "============================================" << endl;
+            cout << "           WELCOME TO SOCIAL MEDIA       " << endl;
+            cout << "============================================" << endl << endl;
+            cout << "     Total Users: " << totalUsers << endl;
+            cout << "     Connect with your friends" << endl << endl;
     }
+
 
     int loginOptions() {
         cout << "=========================" << endl;
@@ -331,8 +349,30 @@ public:
         while (true) {
             cout << "Enter password: ";
             cin >> password;
-            if (!Validator::isValidPassword(password)) cout << "Password must be at least 6 characters" << endl;
-            else break;
+
+            if (password.length() < 8) {
+                cout << "Password must be at least 8 characters long\n";
+            } else {
+                bool hasUpper = false, hasLower = false, hasDigit = false, hasSpecial = false;
+
+                for (char c : password) {
+                    if (isupper(c)) hasUpper = true;
+                    else if (islower(c)) hasLower = true;
+                    else if (isdigit(c)) hasDigit = true;
+                    else hasSpecial = true;
+                }
+
+                if (!hasUpper)
+                    cout << "Password must contain at least one uppercase letter\n";
+                else if (!hasLower)
+                    cout << "Password must contain at least one lowercase letter\n";
+                else if (!hasDigit)
+                    cout << "Password must contain at least one number\n";
+                else if (!hasSpecial)
+                    cout << "Password must contain at least one special character\n";
+                else
+                    break;
+            }
         }
 
         users.push_back(User(nextUserId++, username, password, email));
@@ -487,6 +527,10 @@ public:
         if (!found) cout << "No messages yet." << endl;
         cout << endl;
     }
+
+    int getUserCount() {
+        return users.size();
+    }
 };
 
 int main() {
@@ -506,7 +550,7 @@ int main() {
             if(p.authorId == u.userId) p.authorName = u.username;
 
     while(true) {
-        w.display();
+        w.display(system.getUserCount());
         int choice = w.loginOptions();
 
         if(choice == 1) {
