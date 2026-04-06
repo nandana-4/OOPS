@@ -1,8 +1,8 @@
 #include <iostream>
-#include <fstream>
+#include <fstream>  //files
 #include <vector>
 #include <string>
-#include <sstream>
+#include <sstream>  //files
 #include <algorithm>
 #include <cctype>   // for isupper, islower, isdigit
 using namespace std;
