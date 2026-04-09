@@ -1,13 +1,14 @@
 #include <iostream>
-#include <fstream>  //files
-#include <vector>
+#include <fstream>  //files Used for file handling (read/write files)
+#include <vector>   //Dynamic arrays (store users, posts, messages)
 #include <string>
-#include <sstream>  //files
-#include <algorithm>
+#include <sstream>  //files //slitting strings to read from files
+#include <algorithm> //Functions like find(), remove()
 #include <cctype>   // for isupper, islower, isdigit
 using namespace std;
 
 // ===== Safe integer conversion =====
+//Function to safely convert string to integer catches exception such as abc
 int safeStoi(const string &s) {
     try {
         if (s.empty()) return 0;
@@ -18,6 +19,7 @@ int safeStoi(const string &s) {
 }
 
 // ===== Safe integer input =====
+//to avoid loop takes input as a string and then converts into number to check
 int getIntInput() {
     string input;
     int number;
@@ -34,15 +36,16 @@ int getIntInput() {
 }
 
 // ===== Base Validator Class with Polymorphism =====
+//abstract class
 class BaseValidator {
-public:
+    public:
     virtual bool validate(const string& value) = 0;
     virtual string getErrorMessage() = 0;
     virtual ~BaseValidator() {}
 };
-
+//Override - overrides in parent function like replaces that version with its own
 class UsernameValidator : public BaseValidator {
-public:
+    public:
     bool validate(const string& username) override {
         return username.length() >= 3;
     }
@@ -50,9 +53,9 @@ public:
         return "Username must be at least 3 characters";
     }
 };
-
+//npos = not found find(used to find a char in whatever entered")
 class EmailValidator : public BaseValidator {
-public:
+    public:
     bool validate(const string& email) override {
         return email.find('@') != string::npos && email.find('.') != string::npos;
     }
@@ -62,7 +65,7 @@ public:
 };
 
 class PasswordValidator : public BaseValidator {
-public:
+    public:
     bool validate(const string& password) override {
         if (password.length() < 8) return false;
 
@@ -87,7 +90,7 @@ public:
 
 // ===== Validator using polymorphism =====
 class Validator {
-public:
+    public:
     static bool isValidUsername(string username) {
         UsernameValidator uv;
         return uv.validate(username);
@@ -104,33 +107,39 @@ public:
 
 // ===== Base Content Class for Inheritance =====
 class Content {
-protected:
+    protected:
     int id;
     string content;
     int authorId;
     string authorName;
 
-public:
-    Content() : id(0), authorId(-1) {}
-    Content(int i, string c, int aId, string aName)
-        : id(i), content(c), authorId(aId), authorName(aName) {}
+    public:
+    Content() : id(0), authorId(-1) {} //Variables are directly initialized with values if normal way two step first creation then assignment
+    Content(int i, string c, int aId, string aName): id(i), content(c), authorId(aId), authorName(aName) {}
 
     virtual void display() = 0;
     virtual string getType() = 0;
-    virtual int getId() { return id; }
-    virtual int getAuthorId() { return authorId; }
-    virtual string getAuthorName() { return authorName; }
-    void setAuthorName(const string& name) { authorName = name; }
-    virtual ~Content() {}
+    virtual int getId() {
+        return id;
+    }
+    virtual int getAuthorId() {
+        return authorId;
+    }
+    virtual string getAuthorName() {
+        return authorName;
+    }
+    void setAuthorName(const string& name) {
+        authorName = name;
+    }
+    virtual ~Content() {} //When using inheritance + pointers ensures proper clean up of child objects
 };
 
 // ===== Post Class inheriting from Content =====
 class Post : public Content {
-private:
+    private:
     vector<int> likedBy;
     vector<string> comments;
-
-public:
+    public:
     Post() : Content() {}
     Post(int id, string text, int uId, string uName) : Content(id, text, uId, uName) {}
 
@@ -139,13 +148,17 @@ public:
         cout << "Author: " << authorName << endl;
         cout << "Content: " << content << endl;
         cout << "Likes: " << likedBy.size() << " | Comments: " << comments.size() << endl;
-        for (auto &c : comments) cout << " - " << c << endl;
+        for (auto &c : comments) {
+                cout << " - " << c << endl;
+        }
         cout << "----------------------" << endl << endl;
     }
 
     string getType() override { return "Post"; }
 
     bool addLike(int userId) {
+        //searches for start to end if user not found like added
+        //�User ID not found in likedBy�
         if (find(likedBy.begin(), likedBy.end(), userId) == likedBy.end()) {
             likedBy.push_back(userId);
             return true;
@@ -153,9 +166,15 @@ public:
         return false;
     }
 
-    void addComment(string comment) { comments.push_back(comment); }
-    vector<int>& getLikedBy() { return likedBy; }
-    vector<string>& getComments() { return comments; }
+    void addComment(string comment) {
+        comments.push_back(comment);
+    }
+    vector<int>& getLikedBy() {
+        return likedBy;
+    }
+    vector<string>& getComments() {
+        return comments;
+    }
 
     friend void savePostsToFile(vector<Post>& posts);
     friend void loadPostsFromFile(vector<Post>& posts);
@@ -163,21 +182,21 @@ public:
 
 // ===== Message Class inheriting from Content =====
 class Message : public Content {
-private:
+    private:
     int receiverId;
-
-public:
+    //Every Message is a Content so Content constructor initializes id, content, authorId, authorName then Message adds its own receiverId
+    public:
     Message() : Content(), receiverId(-1) {}
-    Message(int sId, int rId, string sName, string c)
-        : Content(0, c, sId, sName), receiverId(rId) {}
-
+    Message(int sId, int rId, string sName, string c) : Content(0, c, sId, sName), receiverId(rId) {}
     void display() override {
         cout << authorName << ": " << content << endl;
     }
-
-    string getType() override { return "Message"; }
-    int getReceiverId() { return receiverId; }
-
+    string getType() override {
+        return "Message";
+    }
+    int getReceiverId() {
+        return receiverId;
+    }
     friend void saveMessagesToFile(vector<Message>& messages);
     friend void loadMessagesFromFile(vector<Message>& messages);
 };
@@ -193,7 +212,6 @@ public:
     int postCount = 0;
     int likeCount = 0;
     int commentCount = 0;
-
     User() {}
     User(int id, string u, string p, string e) {
         userId = id;
@@ -201,29 +219,39 @@ public:
         password = p;
         email = e;
     }
-
-    void addFriend(int id) { friends.push_back(id); }
+    void addFriend(int id) {
+        friends.push_back(id);
+    }
     void removeFriend(int id) {
         friends.erase(remove(friends.begin(), friends.end(), id), friends.end());
     }
-    int getFriendCount() const { return friends.size(); }
-
-    void addPost() { postCount++; }
-    void removePost() { if (postCount > 0) postCount--; }
-    void addLike() { likeCount++; }
-    void addComment() { commentCount++; }
-
+    int getFriendCount() const {
+        return friends.size();
+    }
+    void addPost() {
+        postCount++;
+    }
+    void removePost() {
+        if (postCount > 0) postCount--;
+    }
+    void addLike() {
+        likeCount++;
+    }
+    void addComment() {
+        commentCount++;
+    }
     friend void saveUsersToFile(vector<User>& users);
     friend void loadUsersFromFile(vector<User>& users);
 };
 
 // ===== File Handling =====
+//users - userID, username, password, email, postCount,likeCount, commentCount, friends
+//posts - id, Content, authorID, likedby, comments
+//messages - sid,rid,msg,sname
 void saveUsersToFile(vector<User>& users) {
-    ofstream file("users.txt");
+    ofstream file("users.txt");//opens users.txt to write content
     for (User &u : users) {
-        file << u.userId << "|" << u.username << "|" << u.password << "|"
-             << u.email << "|" << u.postCount << "|" << u.likeCount << "|"
-             << u.commentCount << "|";
+        file << u.userId << "|" << u.username << "|" << u.password << "|" << u.email << "|" << u.postCount << "|" << u.likeCount << "|"<< u.commentCount << "|";//seperated by | for friend by ,
         for (int i = 0; i < u.friends.size(); i++) {
             file << u.friends[i];
             if (i != u.friends.size() - 1) file << ",";
@@ -231,11 +259,10 @@ void saveUsersToFile(vector<User>& users) {
         file << endl;
     }
 }
-
+//stringstream ss(line) treats the line like a stream so we can extract parts. getline(ss, item, '|') reads everything up to '|' and stores it in item.Push each part into parts vector.
 void loadUsersFromFile(vector<User>& users) {
-    ifstream file("users.txt");
+    ifstream file("users.txt");//open to read content
     if (!file.is_open()) return;
-
     string line;
     while (getline(file, line)) {
         stringstream ss(line);
@@ -243,12 +270,11 @@ void loadUsersFromFile(vector<User>& users) {
         vector<string> parts;
         while (getline(ss, item, '|')) parts.push_back(item);
         if (parts.size() < 7) continue;
-
+        //safeStoi(parts[0]) converts that string to int safely (even if it�s malformed, it returns 0) - id User(int id, string u, string p, string e)
         User u(safeStoi(parts[0]), parts[1], parts[2], parts[3]);
         u.postCount = safeStoi(parts[4]);
         u.likeCount = safeStoi(parts[5]);
         u.commentCount = safeStoi(parts[6]);
-
         if (parts.size() > 7 && !parts[7].empty()) {
             stringstream fs(parts[7]);
             string f;
@@ -278,7 +304,6 @@ void savePostsToFile(vector<Post>& posts) {
 void loadPostsFromFile(vector<Post>& posts) {
     ifstream file("posts.txt");
     if (!file.is_open()) return;
-
     string line;
     while (getline(file, line)) {
         stringstream ss(line);
@@ -311,7 +336,6 @@ void saveMessagesToFile(vector<Message>& messages) {
 void loadMessagesFromFile(vector<Message>& messages) {
     ifstream file("messages.txt");
     if (!file.is_open()) return;
-
     string line;
     while (getline(file, line)) {
         stringstream ss(line);
@@ -381,7 +405,6 @@ public:
             if (user.username == username) return true;
         return false;
     }
-
     void registerUser() {
         string username, email, password;
         cout << endl << "----- REGISTRATION -----" << endl << endl;
@@ -404,12 +427,11 @@ public:
         while (true) {
             cout << "Enter password: ";
             cin >> password;
-
             if (password.length() < 8) {
                 cout << "Password must be at least 8 characters long\n";
-            } else {
+            }
+            else {
                 bool hasUpper = false, hasLower = false, hasDigit = false, hasSpecial = false;
-
                 for (char c : password) {
                     if (isupper(c)) hasUpper = true;
                     else if (islower(c)) hasLower = true;
@@ -449,8 +471,9 @@ public:
     }
 
     void createPost(int userIndex) {
-        string content; cin.ignore();
-        cout << "Enter your post content: "; getline(cin, content);
+        string content;
+        cin.ignore();
+        cout << "Enter your post content: "; getline(cin, content);//one line till enter is pressed - content
         posts.push_back(Post(nextPostId, content, users[userIndex].userId, users[userIndex].username));
         users[userIndex].addPost();
         cout << "Post created successfully! Post ID: " << nextPostId << endl << endl;
@@ -458,13 +481,21 @@ public:
     }
 
     void viewNewsFeed() {
-        if (posts.empty()) { cout << "No posts to show." << endl << endl; return; }
+        if (posts.empty()) {
+                cout << "No posts to show." << endl << endl;
+                return;
+        }
         for (auto &p : posts) p.display();
     }
 
     void viewMyPosts(int userIndex) {
         bool found = false;
-        for (auto &p : posts) if (p.getAuthorId() == users[userIndex].userId) { p.display(); found = true; }
+        for (auto &p : posts) {//auto- figure type automatically &-reference
+                if (p.getAuthorId() == users[userIndex].userId) {
+                        p.display();
+                        found = true;
+                }
+        }
         if (!found) cout << "You have no posts yet." << endl << endl;
     }
 
@@ -474,9 +505,15 @@ public:
         for (auto it = posts.begin(); it != posts.end(); ++it) {
             if (it->getId() == postId) {
                 if (it->getAuthorId() == users[userIndex].userId) {
-                    posts.erase(it); users[userIndex].removePost();
-                    cout << "Post deleted successfully!" << endl << endl; return;
-                } else { cout << "You can only delete your own posts." << endl << endl; return; }
+                    posts.erase(it);
+                    users[userIndex].removePost();
+                    cout << "Post deleted successfully!" << endl << endl;
+                    return;
+                }
+                else {
+                    cout << "You can only delete your own posts." << endl << endl;
+                    return;
+                }
             }
         }
         cout << "Post not found!" << endl << endl;
@@ -485,7 +522,12 @@ public:
     void viewPostById() {
         cout << "Enter Post ID to view: ";
         int postId = getIntInput();
-        for (auto &p : posts) if (p.getId() == postId) { p.display(); return; }
+        for (auto &p : posts) {
+                if (p.getId() == postId) {
+                    p.display();
+                    return;
+                }
+        }
         cout << "Post not found!" << endl << endl;
     }
 
@@ -551,21 +593,17 @@ public:
         string receiverName;
         cout << "Enter username of the user to send message: ";
         cin >> receiverName;
-
         int receiverId = -1;
         for (auto &u : users)
             if (u.username == receiverName) receiverId = u.userId;
-
         if (receiverId == -1 || receiverId == users[userIndex].userId) {
             cout << "User not found or cannot send message to yourself!" << endl << endl;
             return;
         }
-
         cin.ignore();
         string content;
         cout << "Enter your message: ";
         getline(cin, content);
-
         messages.push_back(Message(users[userIndex].userId, receiverId, users[userIndex].username, content));
         cout << "Message sent to " << receiverName << "!" << endl << endl;
     }
@@ -591,24 +629,19 @@ public:
 int main() {
     SocialMediaSystem system;
     welcome w;
-
     // Load data
     loadUsersFromFile(system.users);
     loadPostsFromFile(system.posts);
     loadMessagesFromFile(system.messages);
-
     if(!system.users.empty()) system.nextUserId = system.users.back().userId + 1;
     if(!system.posts.empty()) system.nextPostId = system.posts.back().getId() + 1;
-
     for(auto &p : system.posts)
         for(auto &u : system.users)
             if(p.getAuthorId() == u.userId)
                 p.setAuthorName(u.username);
-
     while(true) {
         w.display(system.getUserCount());
         int choice = w.loginOptions();
-
         if(choice == 1) {
             int currentUser = system.loginUser();
             if(currentUser != -1) {
@@ -645,6 +678,5 @@ int main() {
             cout << "Invalid choice!" << endl;
         }
     }
-
     return 0;
 }
